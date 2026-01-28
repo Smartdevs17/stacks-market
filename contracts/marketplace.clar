@@ -38,3 +38,13 @@
         (ok true)
     )
 )
+
+(define-public (update-price (item-id uint) (new-price uint))
+    (let (
+        (listing (unwrap! (get-listing item-id) (err u100)))
+    )
+        (asserts! (is-eq tx-sender (get owner listing)) err-not-authorized)
+        (map-set listings item-id (merge listing {price: new-price}))
+        (ok true)
+    )
+)
