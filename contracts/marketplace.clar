@@ -68,3 +68,48 @@
         (ok true)
     )
 )
+
+(define-public (place-bid (item-id uint) (bid-amount uint))
+    (let (
+        (auction (unwrap! (get-auction item-id) (err u100)))
+        (current-bid (get highest-bid auction))
+        (current-bidder (get highest-bidder auction))
+    )
+        (asserts! (< block-height (get end-block auction)) (err u101)) ;; Auction ended
+        (asserts! (> bid-amount current-bid) (err u102)) ;; Bid too low
+        
+        ;; Return funds to previous bidder if exists
+        (match current-bidder
+            prev-bidder (try! (as-contract (stx-transfer? current-bid tx-sender prev-bidder)))
+            true ;; No previous bidder, do nothing
+        )
+        
+        ;; Lock new bid
+        (try! (stx-transfer? bid-amount tx-sender (as-contract tx-sender)))
+        
+        ;; Update auction
+        (map-set auctions item-id (merge auction {highest-bidder: (some tx-sender), highest-bid: bid-amount}))
+        (ok true)
+    )
+)
+
+(define-public (end-auction (item-id uint))
+    (let (
+        (auction (unwrap! (get-auction item-id) (err u100)))
+        (highest-bidder (get highest-bidder auction))
+        (highest-bid (get highest-bid auction))
+        (owner (get owner auction))
+    )
+        (asserts! (>= block-height (get end-block auction)) (err u103)) ;; Auction not yet ended
+        
+        (match highest-bidder
+            winner (try! (as-contract (stx-transfer? highest-bid tx-sender owner))) ;; Transfer funds to seller
+            true ;; No bids, nothing to transfer
+        )
+        
+        ;; Transfer item (Conceptual: Update owner map or just delete auction as completed)
+        ;; For this mock, we just delete the auction.
+        (map-delete auctions item-id)
+        (ok true)
+    )
+)
