@@ -1,0 +1,32 @@
+{
+  "name": "stacks-market",
+  "version": "1.0.0",
+  "description": "A marketplace for trading assets on Stacks.",
+  "main": "index.js",
+  "directories": {
+    "test": "tests"
+  },
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/Smartdevs17/stacks-market.git"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "type": "commonjs",
+  "bugs": {
+    "url": "https://github.com/Smartdevs17/stacks-market/issues"
+  },
+  "homepage": "https://github.com/Smartdevs17/stacks-market#readme",
+  "dependencies": {
+    "@stacks/network": "^7.3.1",
+    "@stacks/transactions": "^7.3.1",
+    "@types/node": "^25.1.0",
+    "dotenv": "^17.2.3",
+    "tsx": "^4.21.0",
+    "typescript": "^5.9.3"
+  }
+}
