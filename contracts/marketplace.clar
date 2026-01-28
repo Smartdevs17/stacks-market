@@ -28,3 +28,13 @@
         (ok true)
     )
 )
+
+(define-public (unlist-item (item-id uint))
+    (let (
+        (listing (unwrap! (get-listing item-id) (err u100)))
+    )
+        (asserts! (is-eq tx-sender (get owner listing)) err-not-authorized)
+        (map-delete listings item-id)
+        (ok true)
+    )
+)
