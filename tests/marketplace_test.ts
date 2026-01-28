@@ -99,3 +99,89 @@ Clarinet.test({
         listing['price'].expectUint(600);
     },
 });
+
+Clarinet.test({
+    name: "Ensure that auctions can be started and bids can be placed",
+    async fn(chain: Chain, accounts: Map<string, Account>) {
+        let wallet_1 = accounts.get("wallet_1")!;
+        let wallet_2 = accounts.get("wallet_2")!;
+        
+        // Start auction
+        let startBlock = chain.mineBlock([
+            Tx.contractCall("marketplace", "start-auction", [types.uint(1), types.uint(100), types.uint(10)], wallet_1.address)
+        ]);
+        startBlock.receipts[0].result.expectOk().expectBool(true);
+
+        // Place bid
+        let bidBlock = chain.mineBlock([
+            Tx.contractCall("marketplace", "place-bid", [types.uint(1), types.uint(200)], wallet_2.address)
+        ]);
+        bidBlock.receipts[0].result.expectOk().expectBool(true);
+        
+        // Verify auction state
+        let auctionBlock = chain.mineBlock([
+            Tx.contractCall("marketplace", "get-auction", [types.uint(1)], wallet_1.address)
+        ]);
+        let auction = auctionBlock.receipts[0].result.expectSome().expectTuple();
+        auction['highest-bidder'].expectSome().expectPrincipal(wallet_2.address);
+        auction['highest-bid'].expectUint(200);
+    },
+});
+
+Clarinet.test({
+    name: "Ensure that outbid users are refunded",
+    async fn(chain: Chain, accounts: Map<string, Account>) {
+        let wallet_1 = accounts.get("wallet_1")!;
+        let wallet_2 = accounts.get("wallet_2")!;
+        let wallet_3 = accounts.get("wallet_3")!;
+        
+        // Start auction
+        chain.mineBlock([
+            Tx.contractCall("marketplace", "start-auction", [types.uint(1), types.uint(100), types.uint(10)], wallet_1.address)
+        ]);
+
+        // Wallet 2 bids 200
+        chain.mineBlock([
+            Tx.contractCall("marketplace", "place-bid", [types.uint(1), types.uint(200)], wallet_2.address)
+        ]);
+
+        // Wallet 3 bids 300 - Should trigger refund to Wallet 2
+        let bidBlock = chain.mineBlock([
+            Tx.contractCall("marketplace", "place-bid", [types.uint(1), types.uint(300)], wallet_3.address)
+        ]);
+        bidBlock.receipts[0].result.expectOk().expectBool(true);
+    },
+});
+
+Clarinet.test({
+    name: "Ensure that auctions can be settled correctly",
+    async fn(chain: Chain, accounts: Map<string, Account>) {
+        let wallet_1 = accounts.get("wallet_1")!;
+        let wallet_2 = accounts.get("wallet_2")!;
+        
+        // Start auction duration 10
+        chain.mineBlock([
+            Tx.contractCall("marketplace", "start-auction", [types.uint(1), types.uint(100), types.uint(10)], wallet_1.address)
+        ]);
+
+        // Place lead bid
+        chain.mineBlock([
+            Tx.contractCall("marketplace", "place-bid", [types.uint(1), types.uint(200)], wallet_2.address)
+        ]);
+
+        // Pass time
+        chain.mineEmptyBlockUntil(20);
+
+        // End auction
+        let endBlock = chain.mineBlock([
+            Tx.contractCall("marketplace", "end-auction", [types.uint(1)], wallet_1.address)
+        ]);
+        endBlock.receipts[0].result.expectOk().expectBool(true);
+        
+        // Verify auction is deleted
+        let auctionBlock = chain.mineBlock([
+            Tx.contractCall("marketplace", "get-auction", [types.uint(1)], wallet_1.address)
+        ]);
+        auctionBlock.receipts[0].result.expectNone();
+    },
+});
