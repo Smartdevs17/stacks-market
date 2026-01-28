@@ -20,7 +20,11 @@
 (define-public (buy-item (item-id uint))
     (let (
         (listing (unwrap! (get-listing item-id) (err u100)))
+        (price (get price listing))
+        (owner (get owner listing))
     )
+        (try! (stx-transfer? price tx-sender owner))
+        (map-delete listings item-id)
         (ok true)
     )
 )
