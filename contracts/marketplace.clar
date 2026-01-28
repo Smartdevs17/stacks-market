@@ -16,3 +16,11 @@
         (ok true)
     )
 )
+
+(define-public (buy-item (item-id uint))
+    (let (
+        (listing (unwrap! (get-listing item-id) (err u100)))
+    )
+        (ok true)
+    )
+)
