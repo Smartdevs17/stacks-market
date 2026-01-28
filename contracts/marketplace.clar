@@ -11,5 +11,8 @@
 )
 
 (define-public (list-item (item-id uint) (price uint))
-    (ok true)
+    (begin
+        (map-set listings item-id {price: price, owner: tx-sender})
+        (ok true)
+    )
 )
