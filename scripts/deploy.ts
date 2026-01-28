@@ -1,9 +1,9 @@
 import { 
   makeContractDeploy, 
   broadcastTransaction, 
-  estimateContractDeploy 
+  fetchFeeEstimate
 } from '@stacks/transactions';
-import { StacksTestnet } from '@stacks/network';
+import { STACKS_TESTNET } from '@stacks/network';
 import { readFileSync } from 'fs';
 import * as dotenv from 'dotenv';
 import { join } from 'path';
@@ -16,7 +16,7 @@ async function deploy() {
     throw new Error("PRIVATE_KEY not found in .env");
   }
 
-  const network = new StacksTestnet();
+  const network = STACKS_TESTNET;
   const contractName = 'marketplace';
   const codeBody = readFileSync(join(__dirname, '../contracts/marketplace.clar'), 'utf8');
 
@@ -31,23 +31,23 @@ async function deploy() {
   };
 
   try {
-    const feeEstimate = await estimateContractDeploy(txOptions);
-    console.log(`Estimated fee: ${feeEstimate}`);
+    const transaction = await makeContractDeploy(txOptions);
+    const fee = await fetchFeeEstimate({ transaction, network });
+    console.log(`Estimated fee: ${fee}`);
 
-    const transaction = await makeContractDeploy({
+    const signedTx = await makeContractDeploy({
       ...txOptions,
-      fee: feeEstimate,
+      fee,
     });
 
-    const result = await broadcastTransaction({ transaction, network });
+    const result = await broadcastTransaction({ transaction: signedTx, network });
 
-    if (result.error) {
-      console.error('Broadcast Error:', result.error);
-      if (result.reason) console.error('Reason:', result.reason);
-    } else {
+    if ('txid' in result) {
       console.log('Deployment Broadcasted Successfully!');
       console.log('Transaction ID:', result.txid);
       console.log(`Explorer: https://explorer.hiro.so/txid/${result.txid}?chain=testnet`);
+    } else {
+      console.error('Broadcast Error:', result);
     }
   } catch (error) {
     console.error('Deployment Failed:', error);
