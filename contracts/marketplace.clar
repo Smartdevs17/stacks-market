@@ -1,11 +1,17 @@
 ;; marketplace
-;; Minimal marketplace contract
+;; Advanced marketplace with royalties and collections
 
 (define-constant err-not-authorized (err u100))
+(define-constant err-invalid-royalty (err u104))
 
+(define-constant contract-owner tx-sender)
 
 (define-map listings uint {price: uint, owner: principal})
 (define-map auctions uint {highest-bidder: (optional principal), highest-bid: uint, end-block: uint, owner: principal})
+
+;; New: Royalties and Collections
+(define-map royalties uint {creator: principal, bps: uint}) ;; basis points (100 = 1%)
+(define-map collections uint {name: (string-ascii 20), items: (list 100 uint)})
 
 (define-read-only (get-listing (item-id uint))
     (map-get? listings item-id)
@@ -13,6 +19,29 @@
 
 (define-read-only (get-auction (item-id uint))
     (map-get? auctions item-id)
+)
+
+(define-read-only (get-royalty (item-id uint))
+    (map-get? royalties item-id)
+)
+
+;; Admin Functions
+(define-public (delist-admin (item-id uint))
+    (begin
+        (asserts! (is-eq tx-sender contract-owner) err-not-authorized)
+        (map-delete listings item-id)
+        (map-delete auctions item-id)
+        (ok true)
+    )
+)
+
+(define-public (set-royalty (item-id uint) (creator principal) (bps uint))
+    (begin
+        ;; Only contract owner or existing creator can set royalties for now (simplified)
+        (asserts! (is-eq tx-sender contract-owner) err-not-authorized)
+        (asserts! (<= bps u1000) err-invalid-royalty) ;; Max 10%
+        (ok (map-set royalties item-id {creator: creator, bps: bps}))
+    )
 )
 
 (define-public (list-item (item-id uint) (price uint))
@@ -27,8 +56,18 @@
         (listing (unwrap! (get-listing item-id) (err u100)))
         (price (get price listing))
         (owner (get owner listing))
+        (royalty-data (get-royalty item-id))
     )
-        (try! (stx-transfer? price tx-sender owner))
+        (match royalty-data
+            data (let (
+                (royalty-amount (/ (* price (get bps data)) u10000))
+                (seller-amount (- price royalty-amount))
+            )
+                (try! (stx-transfer? royalty-amount tx-sender (get creator data)))
+                (try! (stx-transfer? seller-amount tx-sender owner))
+            )
+            (try! (stx-transfer? price tx-sender owner))
+        )
         (map-delete listings item-id)
         (ok true)
     )
@@ -56,9 +95,6 @@
 
 (define-public (start-auction (item-id uint) (start-price uint) (duration uint))
     (begin
-        ;; Ensure item is not already listed or auctioned? Simplified: Overwrite or fresh.
-        ;; Assuming fresh item for simplicity, or check ownership if we had NFT trait.
-        ;; For now, anyone can start auction for "their" item (by claiming it here).
         (map-set auctions item-id {
             highest-bidder: none,
             highest-bid: start-price,
@@ -75,19 +111,15 @@
         (current-bid (get highest-bid auction))
         (current-bidder (get highest-bidder auction))
     )
-        (asserts! (< block-height (get end-block auction)) (err u101)) ;; Auction ended
-        (asserts! (> bid-amount current-bid) (err u102)) ;; Bid too low
+        (asserts! (< block-height (get end-block auction)) (err u101))
+        (asserts! (> bid-amount current-bid) (err u102))
         
-        ;; Return funds to previous bidder if exists
         (match current-bidder
             prev-bidder (try! (as-contract (stx-transfer? current-bid tx-sender prev-bidder)))
-            true ;; No previous bidder, do nothing
+            true
         )
         
-        ;; Lock new bid
         (try! (stx-transfer? bid-amount tx-sender (as-contract tx-sender)))
-        
-        ;; Update auction
         (map-set auctions item-id (merge auction {highest-bidder: (some tx-sender), highest-bid: bid-amount}))
         (ok true)
     )
@@ -99,16 +131,24 @@
         (highest-bidder (get highest-bidder auction))
         (highest-bid (get highest-bid auction))
         (owner (get owner auction))
+        (royalty-data (get-royalty item-id))
     )
-        (asserts! (>= block-height (get end-block auction)) (err u103)) ;; Auction not yet ended
+        (asserts! (>= block-height (get end-block auction)) (err u103))
         
         (match highest-bidder
-            winner (try! (as-contract (stx-transfer? highest-bid tx-sender owner))) ;; Transfer funds to seller
-            true ;; No bids, nothing to transfer
+            winner (match royalty-data
+                data (let (
+                    (royalty-amount (/ (* highest-bid (get bps data)) u10000))
+                    (seller-amount (- highest-bid royalty-amount))
+                )
+                    (try! (as-contract (stx-transfer? royalty-amount tx-sender (get creator data))))
+                    (try! (as-contract (stx-transfer? seller-amount tx-sender owner)))
+                )
+                (try! (as-contract (stx-transfer? highest-bid tx-sender owner)))
+            )
+            true
         )
         
-        ;; Transfer item (Conceptual: Update owner map or just delete auction as completed)
-        ;; For this mock, we just delete the auction.
         (map-delete auctions item-id)
         (ok true)
     )
