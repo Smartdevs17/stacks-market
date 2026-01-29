@@ -110,3 +110,14 @@ Clarinet.test({
         block.receipts[0].result.expectOk().expectBool(true);
     },
 });
+
+Clarinet.test({
+    name: "Ensure that get-contract-owner returns the correct deployer address",
+    async fn(chain: Chain, accounts: Map<string, Account>) {
+        let deployer = accounts.get("deployer")!;
+        let block = chain.mineBlock([
+            Tx.contractCall("marketplace", "get-contract-owner", [], deployer.address)
+        ]);
+        block.receipts[0].result.expectOk().expectPrincipal(deployer.address);
+    },
+});
