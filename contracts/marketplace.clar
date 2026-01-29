@@ -115,6 +115,7 @@
             end-block: (+ block-height duration),
             owner: tx-sender
         })
+        (print {event: "start-auction", item-id: item-id, start-price: start-price, duration: duration})
         (ok true)
     )
 )
