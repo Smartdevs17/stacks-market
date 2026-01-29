@@ -4,6 +4,8 @@ import { NFTCatalog } from './components/NFTCatalog';
 import { MintForm } from './components/MintForm';
 import { CollectionStats } from './components/CollectionStats';
 import { MarketActivity } from './components/MarketActivity';
+import { MarketHelp } from './components/MarketHelp';
+import { Footer } from './components/Footer';
 import './App.css';
 
 function App() {
@@ -40,8 +42,10 @@ function App() {
 
           <CollectionStats />
           <MarketActivity />
+          <MarketHelp />
         </main>
       </div>
+      <Footer />
     </div>
   )
 }
