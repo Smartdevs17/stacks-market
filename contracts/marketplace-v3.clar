@@ -15,12 +15,31 @@
 
 ;; Dutch Auction Map
 ;; ID -> {seller, start-price, reserve-price, start-block, duration, decay-rate}
-(define-map dutch-auctions uint {
-    seller: principal,
-    start-price: uint,
-    reserve-price: uint,
-    start-block: uint,
-    duration: uint,
-    decay-rate: uint
-})
+
+(define-read-only (get-auction (auction-id uint))
+    (map-get? dutch-auctions auction-id)
+)
+
+(define-read-only (get-current-price (auction-id uint))
+    (let (
+        (auction (unwrap! (get-auction auction-id) (err u100)))
+        (elapsed (- block-height (get start-block auction)))
+        (decay (* elapsed (get decay-rate auction)))
+        (start-price (get start-price auction))
+    )
+        ;; Price = Start - Decay, but max(Result, Reserve)
+        (if (> decay start-price)
+            (ok (get reserve-price auction)) ;; Should allow for 0 or reserve
+            (let (
+                (calculated-price (- start-price decay))
+            )
+                (if (< calculated-price (get reserve-price auction))
+                    (ok (get reserve-price auction))
+                    (ok calculated-price)
+                )
+            )
+        )
+    )
+)
+
 
