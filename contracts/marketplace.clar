@@ -82,6 +82,7 @@
             (try! (stx-transfer? price tx-sender owner))
         )
         (map-delete listings item-id)
+        (print {event: "buy-item", item-id: item-id, buyer: tx-sender, price: price})
         (ok true)
     )
 )
