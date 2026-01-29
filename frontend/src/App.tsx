@@ -2,6 +2,8 @@ import { Header } from './components/Header';
 import { Sidebar } from './components/Sidebar';
 import { NFTCatalog } from './components/NFTCatalog';
 import { MintForm } from './components/MintForm';
+import { CollectionStats } from './components/CollectionStats';
+import { MarketActivity } from './components/MarketActivity';
 import './App.css';
 
 function App() {
@@ -35,6 +37,9 @@ function App() {
             <NFTCatalog />
             <MintForm />
           </div>
+
+          <CollectionStats />
+          <MarketActivity />
         </main>
       </div>
     </div>
