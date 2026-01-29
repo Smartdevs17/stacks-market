@@ -132,3 +132,27 @@ Clarinet.test({
         block.receipts[0].result.expectNone();
     },
 });
+
+Clarinet.test({
+    name: "Ensure that is-item-listed correctly identifies active listings",
+    async fn(chain: Chain, accounts: Map<string, Account>) {
+        let wallet_1 = accounts.get("wallet_1")!;
+        
+        // Initial state: not listed
+        let queryInitial = chain.mineBlock([
+            Tx.contractCall("marketplace", "is-item-listed", [types.uint(1)], wallet_1.address)
+        ]);
+        queryInitial.receipts[0].result.expectBool(false);
+
+        // List item
+        chain.mineBlock([
+            Tx.contractCall("marketplace", "list-item", [types.uint(1), types.uint(500)], wallet_1.address)
+        ]);
+
+        // Post-list: true
+        let queryAfter = chain.mineBlock([
+            Tx.contractCall("marketplace", "is-item-listed", [types.uint(1)], wallet_1.address)
+        ]);
+        queryAfter.receipts[0].result.expectBool(true);
+    },
+});
