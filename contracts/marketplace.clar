@@ -17,6 +17,10 @@
     (map-get? listings item-id)
 )
 
+(define-read-only (get-contract-owner)
+    (ok contract-owner)
+)
+
 (define-read-only (get-auction (item-id uint))
     (map-get? auctions item-id)
 )
