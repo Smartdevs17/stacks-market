@@ -57,9 +57,26 @@
             decay-rate: decay-rate
         })
         (print {event: "create-dutch-auction", auction-id: auction-id, start-price: start-price, decay: decay-rate})
+
+(define-public (buy-dutch-auction (auction-id uint))
+    (let (
+        (auction (unwrap! (get-auction auction-id) (err u100)))
+        (current-price-result (unwrap! (get-current-price auction-id) (err u100)))
+        (fee (get-dutch-fee current-price-result))
+        (seller-amount (- current-price-result fee))
+    )
+        (asserts! (<= block-height (+ (get start-block auction) (get duration auction))) err-auction-expired)
+        
+        ;; Transfer Funds
+        (try! (stx-transfer? seller-amount tx-sender (get seller auction)))
+        (try! (stx-transfer? fee tx-sender contract-owner))
+        
+        (map-delete dutch-auctions auction-id)
+        (print {event: "buy-dutch-auction", auction-id: auction-id, buyer: tx-sender, price: current-price-result, fee: fee})
         (ok true)
     )
 )
+
 
 
 
