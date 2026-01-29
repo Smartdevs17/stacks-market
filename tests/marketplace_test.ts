@@ -121,3 +121,14 @@ Clarinet.test({
         block.receipts[0].result.expectOk().expectPrincipal(deployer.address);
     },
 });
+
+Clarinet.test({
+    name: "Ensure that get-collection-details returns none for non-existent collections",
+    async fn(chain: Chain, accounts: Map<string, Account>) {
+        let wallet_1 = accounts.get("wallet_1")!;
+        let block = chain.mineBlock([
+            Tx.contractCall("marketplace", "get-collection-details", [types.uint(999)], wallet_1.address)
+        ]);
+        block.receipts[0].result.expectNone();
+    },
+});
