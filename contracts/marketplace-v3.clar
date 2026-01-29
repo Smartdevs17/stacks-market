@@ -10,4 +10,17 @@
 (define-constant err-item-already-sold (err u103))
 (define-constant err-price-too-low (err u104))
 
+
 (define-constant contract-owner tx-sender)
+
+;; Dutch Auction Map
+;; ID -> {seller, start-price, reserve-price, start-block, duration, decay-rate}
+(define-map dutch-auctions uint {
+    seller: principal,
+    start-price: uint,
+    reserve-price: uint,
+    start-block: uint,
+    duration: uint,
+    decay-rate: uint
+})
+
