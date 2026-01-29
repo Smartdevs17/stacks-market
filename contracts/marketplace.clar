@@ -136,6 +136,7 @@
         
         (try! (stx-transfer? bid-amount tx-sender (as-contract tx-sender)))
         (map-set auctions item-id (merge auction {highest-bidder: (some tx-sender), highest-bid: bid-amount}))
+        (print {event: "place-bid", item-id: item-id, bidder: tx-sender, amount: bid-amount})
         (ok true)
     )
 )
