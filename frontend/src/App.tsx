@@ -1,5 +1,7 @@
 import { Header } from './components/Header';
 import { Sidebar } from './components/Sidebar';
+import { NFTCatalog } from './components/NFTCatalog';
+import { MintForm } from './components/MintForm';
 import './App.css';
 
 function App() {
@@ -13,6 +15,7 @@ function App() {
             <h2>Marketplace Dashboard</h2>
             <p>Discover, buy, and sell digital assets on Stacks.</p>
           </section>
+          
           <div className="stats-grid">
             <div className="stat-card">
               <h3>Active Listings</h3>
@@ -26,6 +29,11 @@ function App() {
               <h3>My Items</h3>
               <p className="stat-value">0</p>
             </div>
+          </div>
+
+          <div className="dashboard-grid">
+            <NFTCatalog />
+            <MintForm />
           </div>
         </main>
       </div>
