@@ -38,8 +38,28 @@
                     (ok calculated-price)
                 )
             )
-        )
+
+(define-read-only (get-dutch-fee (price uint))
+    (/ price u100) ;; 1% fee hardcoded for v3
+)
+
+(define-public (create-auction (auction-id uint) (start-price uint) (reserve-price uint) (duration uint) (decay-rate uint))
+    (begin
+        (asserts! (is-none (get-auction auction-id)) err-item-already-sold) ;; Reusing err for ID conflict
+        (asserts! (> start-price reserve-price) err-invalid-price)
+        
+        (map-set dutch-auctions auction-id {
+            seller: tx-sender,
+            start-price: start-price,
+            reserve-price: reserve-price,
+            start-block: block-height,
+            duration: duration,
+            decay-rate: decay-rate
+        })
+        (print {event: "create-dutch-auction", auction-id: auction-id, start-price: start-price, decay: decay-rate})
+        (ok true)
     )
 )
+
 
 
