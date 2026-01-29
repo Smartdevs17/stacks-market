@@ -29,6 +29,10 @@
     (map-get? royalties item-id)
 )
 
+(define-read-only (get-collection-details (collection-id uint))
+    (map-get? collections collection-id)
+)
+
 ;; Admin Functions
 (define-public (delist-admin (item-id uint))
     (begin
