@@ -1,12 +1,12 @@
 import { useState, useEffect } from 'react';
-import { AppConfig, UserSession, showConnect } from '@stacks/connect';
+import { AppConfig, UserSession, showConnect, type UserData } from '@stacks/connect';
 import { STACKS_TESTNET } from '@stacks/network';
 
 const appConfig = new AppConfig(['store_write', 'publish_data']);
 const userSession = new UserSession({ appConfig });
 
 export const useStacks = () => {
-  const [userData, setUserData] = useState(null);
+  const [userData, setUserData] = useState<UserData | null>(null);
   const [address, setAddress] = useState<string | null>(null);
 
   useEffect(() => {
