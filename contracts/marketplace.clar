@@ -59,6 +59,7 @@
 (define-public (list-item (item-id uint) (price uint))
     (begin
         (map-set listings item-id {price: price, owner: tx-sender})
+        (print {event: "list-item", item-id: item-id, price: price, seller: tx-sender})
         (ok true)
     )
 )
