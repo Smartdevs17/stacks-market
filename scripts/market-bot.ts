@@ -31,7 +31,7 @@ async function runMarketBot() {
     // Let's assume we want to just create *traffic*. Failed txs count for stress testing.
     
     const txOptions = {
-        contractAddress: 'ST1PQ24CH0EKEDT2R3S6A7D9D99N6B0X7FR05624W',
+        contractAddress: 'SP9AS5B36MKC0FVF4DE75A1EBPANXQ14AEH98BH0',
         contractName: SWARM_CONFIG.MARKET_CONTRACT,
         functionName: 'buy-dutch-auction',
         functionArgs: [uintCV(SWARM_CONFIG.AUCTION_ID)],
